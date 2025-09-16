@@ -1,0 +1,21 @@
+Welcome to Polar Clock Pro!
+
+This application reimagines the traditional clock, transforming time into a beautiful and intuitive visual display.
+
+## What is a Polar Clock?
+
+A polar clock represents time not with hands, but with a series of concentric, colored arcs. Each arc corresponds to a different unit of time: Seconds, Minutes, Hours, Day, Month, and more. As time progresses, each arc fills up, providing an at-a-glance understanding of where you are in any given cycle.
+
+The design philosophy is "Data as Art." Every visual element serves the dual purpose of conveying information clearly and contributing to a clean, uncluttered aesthetic.
+
+## How to Read the Clock
+
+Reading the Polar Clock is simple once you understand the basics.
+
+1.  **The Arcs:** Time is displayed through a series of rings. By default, the innermost arc represents seconds, followed by minutes, hours, day of the month, and month of the year. The visibility and order of these arcs can be customized in the settings.
+
+2.  **Progress:** Each arc fills up clockwise as its time unit passes. For example, the seconds arc will be half-full at 30 seconds, and completely full at 59 seconds. When an arc completes a full circle, it resets and begins its next cycle.
+
+3.  **Labels:** To make things even clearer, each active arc has a label that displays its current value (e.g., "45" on the seconds arc). You can even change how this label is displayed in the settings—for example, showing the time remaining in a cycle instead of the time passed.
+
+This is not just a passive clock; it's an active tool designed to help you visualize, manage, and master your time. Explore the settings to customize the clock to your liking and discover the powerful built-in productivity tools.

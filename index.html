@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polar Clock Pro</title>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <!-- DEPENDENCIES: Tailwind CSS for styling and Phosphor Icons for UI icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/settings.css">
+    <style>
+    /* General page styling */
+    body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #121212;
+        color: #ffffff;
+        font-family: 'Bahnschrift', sans-serif;
+        overflow: hidden;
+    }
+
+    /* Canvas container */
+    .canvas-container {
+        position: relative;
+        height: 100vh;
+        flex-grow: 1; /* Let the clock take up available space */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .clock-square-wrapper {
+        position: relative;
+        width: 95vh; /* Make the clock container a square based on viewport height */
+        height: 95vh;
+        max-width: 100%; /* Ensure it doesn't overflow its parent flex container */
+        max-height: 100%;
+    }
+
+    canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        position: relative;
+        z-index: 102;
+    }
+
+    /* Digital clock display */
+    #digitalDisplay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        line-height: 1.2;
+        pointer-events: none;
+        z-index: 102;
+    }
+
+    #digitalTime {
+        font-size: 1.8em;
+        font-weight: 500;
+    }
+
+    #digitalDate {
+        font-size: 0.72em;
+        font-weight: 300;
+        opacity: 0.8;
+    }
+
+    #optionsBtn {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 200;
+        opacity: 0.5;
+    }
+
+    .panel-hidden {
+        display: none !important;
+    }
+
+    /* --- UI STYLES --- */
+    #tool-select-menu {
+        position: absolute;
+        bottom: 100%; /* Position above the footer */
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #333;
+        border-radius: 10px;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 10px;
+        box-shadow: 0 -4px 15px rgba(0,0,0,0.2);
+        z-index: 201; /* Must be higher than optionsBtn (200) */
+    }
+    .tool-select-button {
+        background-color: #444;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        width: 100%;
+        text-align: left;
+    }
+    .tool-select-button:hover {
+        background-color: #555;
+    }
+    .view-panel {
+        display: none; /* Hidden by default */
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(18, 18, 18, 0.98);
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.5rem;
+        z-index: 300;
+        overflow-y: auto;
+        padding: 2rem;
+        box-sizing: border-box;
+    }
+
+    .format-buttons, .display-mode-buttons, .color-preset-buttons, .main-nav-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        background-color: #2a2a2a;
+        border-radius: 10px;
+        padding: 5px;
+    }
+
+    .main-nav-buttons {
+        flex-direction: row;
+        gap: 20px;
+        width: auto;
+    }
+
+    .view-header {
+        width: 100%;
+        max-width: 350px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .header-button, .back-button {
+        padding: 12px 18px;
+        font-size: 1.1rem;
+        border: 2px solid #444;
+        background-color: transparent;
+        color: #ccc;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s, border-color 0.3s;
+        width: 100%;
+        text-align: center;
+    }
+
+    .main-nav-button {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        font-size: 1.8rem;
+        border: 2px solid #444;
+        background-color: transparent;
+        color: #ccc;
+        cursor: pointer;
+        transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    .header-button:hover, .back-button:hover, .main-nav-button:hover {
+        background-color: #333;
+        border-color: #666;
+    }
+
+    .tab-button, .format-button, .display-mode-button, .color-preset-button {
+        padding: 10px;
+        border: none;
+        background-color: transparent;
+        color: #aaa;
+        font-family: 'Bahnschrift', sans-serif;
+        font-size: 0.9rem;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: background-color 0.3s, color 0.3s;
+        white-space: nowrap;
+        flex-grow: 1;
+        text-align: center;
+    }
+
+    .tab-button.active, .format-button.active, .display-mode-button.active, .color-preset-button.active {
+        background-color: #4CAF50;
+        color: white;
+    }
+
+    .ui-panel {
+        width: 100%;
+        max-width: 350px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .settings-section {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .settings-section h3 {
+        margin: 0 0 0.5rem 0;
+        color: #aaa;
+        font-weight: 300;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+    }
+
+    .time-inputs {
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        font-size: 2.5rem;
+        font-weight: 300;
+        gap: 0.5rem;
+    }
+
+    .input-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .input-group label {
+        font-size: 0.7rem;
+        color: #888;
+        text-transform: uppercase;
+        margin-top: 5px;
+    }
+
+    .time-inputs input {
+        width: 65px;
+        background: transparent;
+        border: none;
+        color: white;
+        font-size: 2.5rem;
+        text-align: center;
+        font-family: 'Bahnschrift', sans-serif;
+        border-bottom: 2px solid #444;
+        transition: border-color 0.3s;
+    }
+
+    .time-inputs input:focus {
+        outline: none;
+        border-bottom-color: #4CAF50;
+    }
+
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+
+    .control-buttons {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .control-buttons button, .control-btn {
+        padding: 10px 20px;
+        font-size: 1rem;
+        border: 2px solid #444;
+        background-color: transparent;
+        color: #ccc;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    .control-buttons button:hover, .control-btn:hover {
+        background-color: #333;
+        border-color: #666;
+    }
+
+    #pomodoroMuteBtn.active, #timerMuteBtn.active, #muteTimerSoundBtn.active, #muteStopwatchSoundBtn.active {
+        background-color: #4CAF50;
+        color: white;
+    }
+
+    .alarm-controls { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
+    .am-pm-toggle { display: flex; background-color: #2a2a2a; border-radius: 10px; padding: 5px; }
+    .am-pm-button { padding: 8px 15px; font-size: 0.9rem; }
+    .setting-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 250px; }
+    .switch { position: relative; display: inline-block; width: 60px; height: 34px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #2a2a2a; transition: .4s; border-radius: 34px; }
+    .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: #4CAF50; }
+    input:checked + .slider:before { transform: translateX(26px); }
+
+    #lapTimes {
+        width: 100%;
+        max-width: 300px;
+        max-height: 200px; /* Increased height */
+        overflow-y: auto;
+        background-color: #2a2a2a;
+        border-radius: 8px;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px; /* Increased gap */
+    }
+    .lap-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center; /* Center items vertically */
+        font-size: 0.9rem;
+    }
+    .lap-number {
+        color: #aaa;
+        flex-shrink: 0;
+        margin-right: 10px;
+    }
+    .lap-time {
+        font-family: 'Courier New', Courier, monospace;
+        flex-shrink: 0;
+    }
+    .lap-label-input {
+        background-color: #3a3a3a;
+        color: white;
+        border: 1px solid #555;
+        border-radius: 5px;
+        padding: 4px 8px;
+        width: 100%;
+        margin-left: 10px;
+        font-size: 0.9rem;
+    }
+    .lap-label-input:focus {
+        outline: none;
+        border-color: #4CAF50;
+    }
+
+    .pomodoro-display-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        padding: 0.5rem 1rem;
+        background-color: #2a2a2a;
+        border-radius: 8px;
+    }
+
+    .pomodoro-display-label {
+        font-size: 1.1rem;
+        font-weight: 300;
+        color: #ccc;
+    }
+
+    .pomodoro-display-time {
+        font-family: 'Oswald', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 400;
+        color: #ffffff; /* Default/inactive color */
+        transition: color 0.3s ease;
+    }
+    #pomodoroDashboard .pomodoro-display-time.active {
+        color: #4CAF50 !important; /* Green */
+    }
+    #pomodoroDashboard .pomodoro-display-time.paused {
+        color: #F44336 !important; /* Red */
+    }
+    #pomodoroDashboard .pomodoro-display-time.snoozed {
+        color: #FFDB58 !important; /* Mustard Yellow */
+    }
+
+    .time-inputs.snoozed input {
+        color: #F44336 !important; /* Red for snoozing */
+    }
+
+    .time-input-small {
+        width: 60px;
+        background: #2a2a2a;
+        border: 1px solid #444;
+        color: white;
+        font-size: 1rem;
+        text-align: center;
+        border-radius: 5px;
+        padding: 8px;
+    }
+    .time-input-small:focus {
+        outline: none;
+        border-color: #4CAF50;
+    }
+
+    /* --- Accordion Styles --- */
+    .accordion {
+        width: 100%;
+        max-width: 350px;
+    }
+    .accordion-item {
+        background-color: #2a2a2a;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        overflow: hidden;
+    }
+    .accordion-header {
+        background-color: #333;
+        padding: 15px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #eee;
+        font-weight: 500;
+    }
+    .accordion-header:after {
+        content: '+';
+        font-size: 1.5rem;
+        color: #aaa;
+        transition: transform 0.3s;
+    }
+    .accordion-item.active .accordion-header:after {
+        transform: rotate(45deg);
+    }
+    .accordion-content {
+        padding: 0 15px;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+        color: #ccc;
+    }
+    .accordion-content p {
+        margin: 15px 0;
+    }
+    .scrollable-content {
+        max-height: 200px;
+        overflow-y: auto;
+        padding-right: 15px; /* Add some padding for the scrollbar */
+    }
+    .feedback-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .feedback-form input, .feedback-form textarea {
+        width: 100%;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #444;
+        background-color: #3a3a3a;
+        color: white;
+    }
+    .feedback-form button {
+        padding: 10px 20px;
+        font-size: 1rem;
+        border: 2px solid #4CAF50;
+        background-color: transparent;
+        color: #4CAF50;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s, color 0.3s;
+    }
+    .feedback-form button:hover {
+        background-color: #4CAF50;
+        color: white;
+    }
+
+
+    #controlsContainer {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        align-items: center;
+    }
+
+    #bottom-toolbar {
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        transform-origin: center;
+        transform: translateY(calc(-45vh + 40px)) scale(0.1); /* Move up to center and scale down */
+        opacity: 0;
+    }
+
+    #bottom-toolbar.visible {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+
+    /* Reposition the tool select menu */
+    #tool-select-menu {
+        bottom: 80px; /* main-nav-button height (60) + padding (10*2) */
+    }
+    
+    /* --- Styles for the new Time Calculator Panel --- */
+    #timeCalculatorPanel .calculator-card {
+        background-color: #2a2a2a;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    #timeCalculatorPanel h2 {
+        color: #eee;
+        border-bottom: 1px solid #444;
+    }
+    #timeCalculatorPanel label {
+        color: #aaa;
+    }
+    #timeCalculatorPanel input, #timeCalculatorPanel select {
+        background-color: #3a3a3a;
+        color: white;
+        border: 1px solid #555;
+        border-radius: 5px;
+        padding: 8px;
+        width: 100%;
+    }
+    #timeCalculatorPanel input:focus, #timeCalculatorPanel select:focus {
+        outline: none;
+        border-color: #4CAF50;
+    }
+    #timeCalculatorPanel .btn-primary {
+        background-color: #4CAF50;
+        color: white;
+        font-weight: 600;
+        transition: background-color 0.3s;
+        border: none;
+        padding: 10px;
+        border-radius: 5px;
+    }
+    #timeCalculatorPanel .btn-primary:hover {
+        background-color: #45a049;
+    }
+    #timeCalculatorPanel .result-box {
+        background-color: #333;
+        border-left: 4px solid #4CAF50;
+        color: #eee;
+        padding: 1rem;
+        border-radius: 5px;
+        margin-top: 1rem;
+    }
+    
+
+    /* --- DESKTOP LAYOUT --- */
+    @media (min-width: 769px) {
+        body {
+            flex-direction: row;
+            justify-content: space-between; /* Push items to edges */
+        }
+        .canvas-container {
+            flex-grow: 1;
+            /* The clock will fill the available space */
+        }
+        #controlsContainer, #settings-panel {
+            display: none; /* Hide both by default, JS will show one */
+            width: 380px; /* Fixed width for the panel */
+            flex-shrink: 0; /* Prevent the panel from shrinking */
+            height: 100vh;
+            overflow-y: auto;
+            padding: 2rem;
+            box-sizing: border-box;
+            background-color: #1a1a1a;
+            border-left: 1px solid #333;
+            justify-content: center;
+        }
+        #settings-panel {
+             background-color: #1a1a1a;
+             border-left: 1px solid #333;
+        }
+    }
+
+    /* --- MOBILE LAYOUT --- */
+    @media (max-width: 768px) {
+        body {
+            flex-direction: column;
+            overflow-y: auto;
+            height: auto;
+            padding-bottom: 80px; /* Space for the footer */
+        }
+        .canvas-container {
+            order: 1; /* Clock appears first */
+            width: 90vw;
+            height: 90vw; /* Maintain aspect ratio */
+            margin-top: 2rem;
+            flex-grow: 0;
+            flex-shrink: 0;
+        }
+        #controlsContainer {
+            order: 2; /* Tool panels (timer, etc.) appear after the clock */
+            width: 100%;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+        #settings-panel {
+            order: 3; /* Settings appear last on mobile */
+            width: 100%;
+            padding: 1rem;
+            box-sizing: border-box;
+            /* By default it is hidden, JS will toggle it */
+        }
+        .main-nav-buttons {
+            gap: 5px;
+        }
+        .main-nav-button {
+            flex-grow: 1;
+            font-size: 1.2rem;
+            height: 50px;
+        }
+        .view-panel {
+            padding: 1rem;
+        }
+    }
+
+    /* New Settings Panel Layout */
+    #settings-controls-container {
+        /* This container now just holds the content, panel handles layout */
+    }
+    .settings-group {
+        background-color: #2a2a2a;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .settings-group-title {
+        font-size: 1.2rem;
+        font-weight: 500;
+        margin-bottom: 1rem;
+        color: #eee;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #444;
+    }
+    .setting-item, .setting-item-full {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+    }
+    .setting-item-full {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    .setting-item label, .setting-item-full label {
+        color: #ccc;
+    }
+    .setting-item .format-buttons, .setting-item select {
+        flex-basis: 50%;
+    }
+    .color-preset-buttons {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 5px;
+        width: 100%;
+    }
+    .svg-icon {
+        width: 24px;
+        height: 24px;
+        filter: invert(1);
+    }
+    </style>
+    <!-- EmailJS SDK for feedback form -->
+    <script type="text/javascript"
+        src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js">
+    </script>
+</head>
+<body>
+    <!-- Canvas Container for the Clock -->
+    <div class="canvas-container">
+        <div class="clock-square-wrapper">
+            <div id="active-clock-name" style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); font-size: 1.5em; color: #fff; z-index: 10;"></div>
+            <canvas id="polarClockCanvas"></canvas>
+            <div id="digitalDisplay">
+                <div id="digitalTime"></div>
+                <div id="digitalDate"></div>
+            </div>
+            <button id="optionsBtn" class="main-nav-button"><img src="assets/icons/options-on.svg" class="svg-icon"></button>
+            <div id="miniature-clocks-container" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 10;">
+                <!-- Miniature clocks will be added here -->
+            </div>
+            <div id="bottom-ui-container" style="position: absolute; bottom: 0; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; z-index: 103;">
+                <div id="tool-select-menu" class="panel-hidden">
+                    <button class="tool-select-button" data-mode="clock">Clock Only</button>
+                    <button class="tool-select-button" data-mode="timer">Timer</button>
+                    <button class="tool-select-button" data-mode="pomodoro">Pomodoro</button>
+                    <button class="tool-select-button" data-mode="stopwatch">Stopwatch</button>
+                    <button class="tool-select-button" data-mode="timeCalculator">Calculator</button>
+                    <button id="goToAlarmsBtn" class="tool-select-button" data-mode="alarms">Alarms</button>
+                </div>
+                <div id="bottom-toolbar" class="main-nav-buttons">
+                    <button id="toggleControlsBtn" class="main-nav-button"><img src="assets/icons/timer.svg" class="svg-icon"></button>
+                    <button id="goToSettingsBtn" class="main-nav-button"><img src="assets/icons/settings.svg" class="svg-icon"></button>
+                    <button id="goToAboutBtn" class="main-nav-button"><img src="assets/icons/about.svg" class="svg-icon"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="controlsContainer">
+        <!-- Timer Panel -->
+        <div id="timerPanel" class="ui-panel panel-hidden">
+            <div class="time-inputs">
+                <input type="text" id="timerExpressionInput" placeholder="e.g., 1h 30m or 90min" class="w-full text-center text-2xl bg-transparent border-b-2 border-gray-600 focus:border-green-500 outline-none">
+            </div>
+            <div id="timerDisplay" class="text-4xl font-mono">00:00:00:00</div>
+            <div class="control-buttons" id="timer-main-controls">
+                <button id="toggleTimerBtn">Start</button>
+                <button id="resetTimer">Reset</button>
+            </div>
+            <div class="control-buttons" id="timerAlarmControls" style="display: none;">
+                <button id="timerMuteBtn" class="control-btn"><img src="assets/icons/mute-off.svg" class="svg-icon"></button>
+                <button id="timerSnoozeBtn" class="control-btn"><img src="assets/icons/snooze-off.svg" class="svg-icon"></button>
+                <button id="timerStopBtn" class="control-btn">Restart</button>
+            </div>
+             <div class="setting-toggle">
+                <span>Repeat</span>
+                <label class="switch">
+                    <input type="checkbox" id="intervalToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-toggle">
+                <span>Style</span>
+                <label class="switch">
+                    <input type="checkbox" id="timerStyleToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <label for="timerSoundSelect">Timer Sound</label>
+                <select id="timerSoundSelect" class="w-full p-2 bg-gray-700 text-white rounded-md" style="max-width: 180px;">
+                    <option value="Ahooga.wav">Ahooga</option>
+                    <option value="Bwauhm.mp3">Bwauhm</option>
+                    <option value="Lenovo_Error.mp3">Lenovo Error</option>
+                    <option value="Tick_Tock.wav">Tick-Tock</option>
+                    <option value="Tick_Tock_Two.wav">Tick-Tock 2</option>
+                    <option value="bell01.mp3">Bell</option>
+                    <option value="long_break_end.mp3">Long Break End</option>
+                    <option value="nice_digital_watch.mp3">Nice Digital Watch</option>
+                    <option value="rotten_digital_watch.wav">Rotten Digital Watch</option>
+                    <option value="short_break_end.mp3">Short Break End</option>
+                    <option value="work_end.mp3">Work End</option>
+                </select>
+                <button id="testTimerSoundBtn" class="control-btn">Test</button>
+            </div>
+        </div>
+        <!-- Pomodoro Panel -->
+        <div id="pomodoroPanel" class="ui-panel panel-hidden">
+            <div class="settings-section">
+                <div class="flex items-center gap-2">
+                    <h3 class="text-lg font-semibold" id="pomodoroStatus">Work Session</h3>
+                    <button id="pomodoroInfoBtn" class="bg-transparent border-none text-gray-400 hover:text-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-question-circle" viewBox="0 0 16 16">
+                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                            <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.11.248-.247V5.31c0-.138-.11-.247-.248-.247h-.825a.237.237 0 0 0-.241.247zm1.328 1.41a.237.237 0 0 0 .241.247h.825c.138 0 .248-.11.248-.247V6.92c0-.138-.11-.247-.248-.247h-.825a.237.237 0 0 0-.241.247zM8 4a.5.5 0 0 1 .5.5v1.25a.5.5 0 0 1-1 0V4.5A.5.5 0 0 1 8 4zm0 4.5a.5.5 0 0 1 .5-.5v2.25a.5.5 0 0 1-1 0V9a.5.5 0 0 1 .5-.5z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div id="pomodoroDashboard" class="flex flex-col items-center gap-2 w-full max-w-xs">
+                    <div class="pomodoro-display-item">
+                        <span class="pomodoro-display-label">Work</span>
+                        <span id="pomodoroWorkDisplay" class="pomodoro-display-time">00:25:00</span>
+                    </div>
+                    <div class="pomodoro-display-item">
+                        <span class="pomodoro-display-label">Short Break</span>
+                        <span id="pomodoroShortBreakDisplay" class="pomodoro-display-time">00:05:00</span>
+                    </div>
+                    <div class="pomodoro-display-item">
+                        <span class="pomodoro-display-label">Long Break</span>
+                        <span id="pomodoroLongBreakDisplay" class="pomodoro-display-time">00:15:00</span>
+                    </div>
+                </div>
+            </div>
+            <div class="control-buttons" id="pomodoro-main-controls">
+                <button id="togglePomodoroBtn">Start</button>
+                <button id="resetPomodoro" style="display: none;">Reset</button>
+            </div>
+            <div class="control-buttons" id="pomodoroActions" style="display: none;">
+                <button id="pomodoroMuteBtn"><img src="assets/icons/mute-off.svg" class="svg-icon"></button>
+                <button id="pomodoroSnoozeBtn"><img src="assets/icons/snooze-off.svg" class="svg-icon"></button>
+            </div>
+            <div class="control-buttons" id="pomodoroAlarmControls" style="display: none;">
+                <button id="nextCyclePomodoroBtn">Next Cycle</button>
+            </div>
+            <!-- This settings section is now replaced by the modal -->
+            <div class="settings-section w-full max-w-xs mx-auto mt-4">
+                <div class="flex justify-between w-full items-center mb-2">
+                    <label for="pomodoroWorkDuration">Work (min)</label>
+                    <input type="number" id="pomodoroWorkDuration" class="time-input-small" value="25">
+                </div>
+                <div class="flex justify-between w-full items-center mb-2">
+                    <label for="pomodoroShortBreakDuration">Short Break (min)</label>
+                    <input type="number" id="pomodoroShortBreakDuration" class="time-input-small" value="5">
+                </div>
+                <div class="flex justify-between w-full items-center mb-2">
+                    <label for="pomodoroLongBreakDuration">Long Break (min)</label>
+                    <input type="number" id="pomodoroLongBreakDuration" class="time-input-small" value="15">
+                </div>
+                <div class="flex justify-between w-full items-center">
+                    <label for="pomodoroContinuousToggle">Continuous</label>
+                    <label class="switch">
+                        <input type="checkbox" id="pomodoroContinuousToggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <!-- Stopwatch Panel -->
+        <div id="stopwatchPanel" class="ui-panel panel-hidden">
+            <div class="control-buttons">
+                <button id="toggleStopwatchBtn">Start</button>
+                <button id="lapStopwatch">Lap</button>
+                <button id="resetStopwatch">Reset</button>
+            </div>
+            <div class="settings-section w-full max-w-xs">
+                <div class="setting-toggle">
+                    <span>Interval Sound</span>
+                    <label class="switch">
+                        <input type="checkbox" id="stopwatchIntervalSoundToggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div id="stopwatchIntervalInputs" class="flex items-center justify-center gap-2">
+                    <input type="number" id="stopwatchIntervalHours" class="time-input-small" placeholder="HH" min="0" value="0">
+                    <span>:</span>
+                    <input type="number" id="stopwatchIntervalMinutes" class="time-input-small" placeholder="MM" min="0" value="0">
+                    <span>:</span>
+                    <input type="number" id="stopwatchIntervalSeconds" class="time-input-small" placeholder="SS" min="0" value="0">
+                </div>
+            </div>
+            <div class="setting-item">
+                <label for="stopwatchSoundSelect">Stopwatch Sound</label>
+                <select id="stopwatchSoundSelect" class="w-full p-2 bg-gray-700 text-white rounded-md" style="max-width: 180px;">
+                    <option value="Ahooga.wav">Ahooga</option>
+                    <option value="Bwauhm.mp3">Bwauhm</option>
+                    <option value="Lenovo_Error.mp3">Lenovo Error</option>
+                    <option value="Tick_Tock.wav">Tick-Tock</option>
+                    <option value="Tick_Tock_Two.wav">Tick-Tock 2</option>
+                    <option value="bell01.mp3">Bell</option>
+                    <option value="long_break_end.mp3">Long Break End</option>
+                    <option value="nice_digital_watch.mp3">Nice Digital Watch</option>
+                    <option value="rotten_digital_watch.wav">Rotten Digital Watch</option>
+                    <option value="short_break_end.mp3">Short Break End</option>
+                    <option value="work_end.mp3">Work End</option>
+                </select>
+                <button id="testStopwatchSoundBtn" class="control-btn">Test</button>
+            </div>
+            <ul id="lapTimes" class="w-full max-w-xs space-y-2"></ul>
+        </div>
+        <!-- Time Calculator Panel -->
+        <div id="timeCalculatorPanel" class="ui-panel panel-hidden">
+            <div class="calculator-card">
+                <h2 class="text-xl font-semibold mb-4 border-b pb-2">Add Duration to Time</h2>
+                <div class="mb-4">
+                    <label for="startTime" class="block text-sm font-medium mb-1">Start Time (e.g., 3:00 PM)</label>
+                    <input type="text" id="startTime" value="3:00 PM">
+                </div>
+                <div class="mb-4">
+                    <label for="duration" class="block text-sm font-medium mb-1">Duration (hh:mm)</label>
+                    <input type="text" id="duration" value="3:10">
+                </div>
+                <div class="mb-6">
+                    <label for="startDay" class="block text-sm font-medium mb-1">Start Day (Optional)</label>
+                    <select id="startDay">
+                        <option value="">None</option>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                        <option value="Saturday">Saturday</option>
+                        <option value="Sunday">Sunday</option>
+                    </select>
+                </div>
+                <button id="calcAddTime" class="w-full btn-primary">Calculate</button>
+                <div id="addTimeResult" class="result-box hidden"></div>
+            </div>
+            <div class="calculator-card">
+                <h2 class="text-xl font-semibold mb-4 border-b pb-2">Time Arithmetic</h2>
+                <div class="mb-4">
+                    <label for="time1" class="block text-sm font-medium mb-1">Time 1 (hh:mm:ss)</label>
+                    <input type="text" id="time1" value="01:00:00">
+                </div>
+                <div class="mb-4">
+                    <label for="operator" class="block text-sm font-medium mb-1">Operator</label>
+                    <select id="operator">
+                        <option value="+">+</option>
+                        <option value="-">-</option>
+                        <option value="*">*</option>
+                        <option value="/">/</option>
+                    </select>
+                </div>
+                <div class="mb-6">
+                    <label for="operand" class="block text-sm font-medium mb-1">Operand (Time or Number)</label>
+                    <input type="text" id="operand" value="02:30:15">
+                </div>
+                <button id="calcArithmetic" class="w-full btn-primary">Calculate</button>
+                <div id="arithmeticResult" class="result-box hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- About View -->
+    <div id="aboutView" class="view-panel" style="display: none;">
+        <div class="view-header">
+            <button id="backToMainFromAbout" class="back-button">Back</button>
+            <h2 class="view-title">About</h2>
+        </div>
+        <div class="accordion">
+            <!-- About Section -->
+            <div class="accordion-item">
+                <div class="accordion-header">About Polar Clock Pro</div>
+                <div class="accordion-content">
+                    <p id="about-content">Loading...</p>
+                </div>
+            </div>
+            <!-- How to Use Section -->
+            <div class="accordion-item">
+                <div class="accordion-header">How to Use</div>
+                <div class="accordion-content">
+                    <p id="how-to-use-content">Loading...</p>
+                </div>
+            </div>
+            <!-- Pomodoro Technique Section -->
+            <div class="accordion-item">
+                <div class="accordion-header">The Pomodoro Technique</div>
+                <div class="accordion-content">
+                    <p id="pomodoro-content">Loading...</p>
+                </div>
+            </div>
+            <!-- FAQ Section -->
+            <div class="accordion-item">
+                <div class="accordion-header">FAQ</div>
+                <div class="accordion-content">
+                    <p id="faq-content">Loading...</p>
+                </div>
+            </div>
+            <!-- Feedback Section -->
+            <div class="accordion-item">
+                <div class="accordion-header">Feedback & Suggestions</div>
+                <div class="accordion-content">
+                    <form id="feedbackForm" class="feedback-form">
+                        <input type="text" id="feedbackTitle" name="subject" placeholder="Subject">
+                        <textarea id="feedbackMessage" name="message" rows="5" placeholder="Your message..."></textarea>
+                        <button type="submit" id="submitFeedbackBtn">Submit</button>
+                        <p class="text-xs text-gray-500 mt-2 text-center">Limited to 3 per day.</p>
+                        <div id="feedbackStatus" class="mt-2 text-center"></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div id="settings-panel" style="display: none;"> <!-- Initially hidden, will be shown via CSS for desktop -->
+        <div id="settings-controls-container">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="view-title text-2xl">Settings</h2>
+            </div>
+
+            <!-- Settings Sections -->
+            <div class="space-y-6">
+
+                <!-- Section 1: Clock & Time -->
+                <div class="settings-group">
+                    <h3 class="settings-group-title">Clock & Time</h3>
+                    <div class="setting-item">
+                        <label>Time Format</label>
+                        <div class="format-buttons">
+                            <button id="format12" class="format-button">12 Hour</button>
+                            <button id="format24" class="format-button">24 Hour</button>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label for="inverseModeToggle">Inverse Mode</label>
+                        <label class="switch"><input type="checkbox" id="inverseModeToggle"><span class="slider"></span></label>
+                    </div>
+                    <div class="setting-item">
+                        <label for="arcEndCirclesToggle">Digital Display Circles</label>
+                        <label class="switch"><input type="checkbox" id="arcEndCirclesToggle"><span class="slider"></span></label>
+                    </div>
+                </div>
+
+                <!-- Section 2: Visuals & Colors -->
+                <div class="settings-group">
+                    <h3 class="settings-group-title">Visuals & Colors</h3>
+                    <div class="setting-item-full">
+                        <label>Color Scheme</label>
+                        <div class="color-preset-buttons">
+                             <button id="presetDefault" class="color-preset-button">Default</button>
+                            <button id="presetNeon" class="color-preset-button">Neon</button>
+                            <button id="presetPastel" class="color-preset-button">Pastel</button>
+                            <button id="presetColorblind" class="color-preset-button">Colorblind</button>
+                            <button id="presetCandy" class="color-preset-button">Candy</button>
+                            <button id="presetGreyscale" class="color-preset-button">Greyscale</button>
+                            <button id="presetSunrise" class="color-preset-button">Sunrise</button>
+                            <button id="presetSunset" class="color-preset-button">Sunset</button>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label for="colorPaletteSelect">Color Palette</label>
+                        <select id="colorPaletteSelect" class="w-full p-2 bg-gray-700 text-white rounded-md" style="max-width: 150px;">
+                            <option value="" disabled selected>Select Palette</option>
+                            <option value="Red">Red</option>
+                            <option value="Orange">Orange</option>
+                            <option value="Yellow">Yellow</option>
+                            <option value="Green">Green</option>
+                            <option value="Blue">Blue</option>
+                            <option value="Purple">Purple</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label for="flowModeSelect">Flow</label>
+                        <select id="flowModeSelect" class="w-full p-2 bg-gray-700 text-white rounded-md" style="max-width: 150px;">
+                            <option value="0">None</option>
+                            <option value="1">1 Min.</option>
+                            <option value="5">5 Min.</option>
+                            <option value="10">10 Min.</option>
+                            <option value="15">15 Min.</option>
+                            <option value="30">30 Min.</option>
+                            <option value="33">BSG</option>
+                            <option value="60">Hour</option>
+                            <option value="360">Quarter</option>
+                            <option value="720">Half</option>
+                            <option value="1440">Day</option>
+                        </select>
+                    </div>
+                     <div class="setting-item">
+                        <label for="reverseToggle">Reverse</label>
+                        <label class="switch"><input type="checkbox" id="reverseToggle"><span class="slider"></span></label>
+                    </div>
+                </div>
+
+                <!-- Section 3: Sounds -->
+                <div class="settings-group">
+                    <h3 class="settings-group-title">Sounds</h3>
+                    <div class="setting-item-full">
+                        <label for="volumeControl">Volume</label>
+                        <input type="range" id="volumeControl" min="0" max="1" step="0.1" class="w-full">
+                    </div>
+                </div>
+                <!-- Section 4: Customize Arcs -->
+                <div class="settings-group">
+                    <h3 class="settings-group-title">Customize Arcs</h3>
+                    <div class="setting-item">
+                        <label>Separators</label>
+                        <div class="format-buttons">
+                            <button id="separatorsShow" class="format-button">Show</button>
+                            <button id="separatorsHide" class="format-button">Hide</button>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label>Separator Mode</label>
+                        <div class="format-buttons">
+                            <button id="modeStandardSeparators" class="format-button">Standard</button>
+                            <button id="modeRuler" class="format-button">Ruler</button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 items-center text-center">
+                        <h4 class="text-sm uppercase text-gray-400">Arc</h4>
+                        <h4 class="text-sm uppercase text-gray-400">Visible</h4>
+                        <h4 class="text-sm uppercase text-gray-400">Separator</h4>
+                        <span>Day of Week</span>
+                        <label class="switch mx-auto"><input type="checkbox" id="toggleArcDayOfWeek"><span class="slider"></span></label>
+                        <label class="switch mx-auto"><input type="checkbox" id="toggleSeparatorDayOfWeek"><span class="slider"></span></label>
+                        <span>Month</span>
+                        <label class="switch mx-auto"><input type="checkbox" id="toggleArcMonth"><span class="slider"></span></label>
+                        <label class="switch mx-auto"><input type="checkbox" id="toggleSeparatorMonth"><span class="slider"></span></label>
+                        <span>Day</span>
+                        <label class="switch mx-auto"><input type="checkbox" id="toggleArcDay"><span class="slider"></span></label>
+                        <label class="switch mx-auto"><input type="checkbox" id="toggleSeparatorDay"><span class="slider"></span></label>
+                        <span>Hours</span>
+                        <label class="switch mx-auto"><input type="checkbox" id="toggleArcHours"><span class="slider"></span></label>
+                        <label class="switch mx-auto"><input type="checkbox" id="toggleSeparatorHours"><span class="slider"></span></label>
+                        <span>Minutes</span>
+                        <label class="switch mx-auto"><input type="checkbox" id="toggleArcMinutes"><span class="slider"></span></label>
+                        <label class="switch mx-auto"><input type="checkbox" id="toggleSeparatorMinutes"><span class="slider"></span></label>
+                        <span>Seconds</span>
+                        <label class="switch mx-auto"><input type="checkbox" id="toggleArcSeconds"><span class="slider"></span></label>
+                        <label class="switch mx-auto"><input type="checkbox" id="toggleSeparatorSeconds"><span class="slider"></span></label>
+                        <span>Week of Year</span>
+                        <label class="switch mx-auto"><input type="checkbox" id="toggleArcWeekOfYear"><span class="slider"></span></label>
+                        <label class="switch mx-auto"><input type="checkbox" id="toggleSeparatorWeekOfYear"><span class="slider"></span></label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pomodoro Info Modal -->
+    <div id="pomodoroInfoModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md text-white">
+            <h3 class="text-xl font-bold mb-4">The Pomodoro Technique</h3>
+            <p class="mb-2">This is a time management method that uses a timer to break work into intervals, traditionally 25 minutes in length, separated by short breaks.</p>
+            <p class="mb-4">Each interval is known as a pomodoro, from the Italian word for 'tomato'.</p>
+            <ul class="list-disc list-inside mb-4 space-y-1">
+                <li>Work for one full session (e.g., 25 mins).</li>
+                <li>Take a short break (e.g., 5 mins).</li>
+                <li>After four sessions, take a longer break (e.g., 15 mins).</li>
+            </ul>
+            <button id="closePomodoroInfoBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg w-full">Got it</button>
+        </div>
+    </div>
+
+    <div id="audio-failure-message" class="hidden">Audio Failure</div>
+
+<script src="js/clock.js" defer></script>
+    <script src="js/ui.js" defer></script>
+    <script src="js/tools.js" defer></script>
+    <script src="js/settings.js" defer></script>
+    <script src="js/time-calculator.js" defer></script>
+    <script src="js/main.js" defer></script>
+    <div id="attribution" class="absolute bottom-4 left-4 text-white font-['Oswald'] opacity-[.33] hidden md:block z-50">PolarClockPro || v1.0 || by Salamanca-Tech</div>
+</body>
+</html>

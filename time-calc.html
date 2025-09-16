@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Calculator</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com" onerror="alert('Failed to load Tailwind CSS. The page may not be styled correctly, but the calculators should still work.')"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles to complement Tailwind */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* A light gray background */
+        }
+        .calculator-card {
+            background-color: white;
+            border-radius: 0.75rem;
+            padding: 2rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease-in-out;
+        }
+        .calculator-card:hover {
+            transform: translateY(-5px);
+        }
+        .result-box {
+            background-color: #eef2ff; /* A light indigo */
+            border-left: 4px solid #6366f1; /* Indigo border */
+            color: #3730a3; /* Darker indigo text */
+        }
+        .btn-primary {
+            background-color: #4f46e5; /* Indigo */
+            color: white;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        .btn-primary:hover {
+            background-color: #4338ca; /* Darker Indigo */
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-6 md:p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-bold text-gray-800">Time Calculator</h1>
+            <p class="text-lg text-gray-600 mt-2">Perform time-based calculations with ease.</p>
+        </header>
+
+        <main class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            <!-- Calculator 1: Add Duration to Time -->
+            <div class="calculator-card">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4 border-b pb-2">Add Duration to Time</h2>
+                
+                <!-- Start Time -->
+                <div class="mb-4">
+                    <label for="startTime" class="block text-sm font-medium text-gray-700 mb-1">Start Time (e.g., 3:00 PM)</label>
+                    <input type="text" id="startTime" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" value="3:00 PM">
+                </div>
+
+                <!-- Duration -->
+                <div class="mb-4">
+                    <label for="duration" class="block text-sm font-medium text-gray-700 mb-1">Duration (hh:mm)</label>
+                    <input type="text" id="duration" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" value="3:10">
+                </div>
+
+                <!-- Start Day -->
+                <div class="mb-6">
+                    <label for="startDay" class="block text-sm font-medium text-gray-700 mb-1">Start Day (Optional)</label>
+                    <select id="startDay" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">None</option>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                        <option value="Saturday">Saturday</option>
+                        <option value="Sunday">Sunday</option>
+                    </select>
+                </div>
+
+                <button id="calcAddTime" class="w-full btn-primary py-2 px-4 rounded-md">Calculate</button>
+
+                <div id="addTimeResult" class="mt-6 p-4 rounded-md result-box hidden"></div>
+            </div>
+
+            <!-- Calculator 2: Time Arithmetic -->
+            <div class="calculator-card">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4 border-b pb-2">Time Arithmetic</h2>
+
+                <!-- Time 1 -->
+                <div class="mb-4">
+                    <label for="time1" class="block text-sm font-medium text-gray-700 mb-1">Time 1 (hh:mm:ss)</label>
+                    <input type="text" id="time1" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" value="01:00:00">
+                </div>
+
+                <!-- Operator -->
+                <div class="mb-4">
+                    <label for="operator" class="block text-sm font-medium text-gray-700 mb-1">Operator</label>
+                    <select id="operator" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="+">+</option>
+                        <option value="-">-</option>
+                        <option value="*">*</option>
+                        <option value="/">/</option>
+                    </select>
+                </div>
+
+                <!-- Operand -->
+                <div class="mb-6">
+                    <label for="operand" class="block text-sm font-medium text-gray-700 mb-1">Operand (Time or Number)</label>
+                    <input type="text" id="operand" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" value="02:30:15">
+                </div>
+
+                <button id="calcArithmetic" class="w-full btn-primary py-2 px-4 rounded-md">Calculate</button>
+
+                <div id="arithmeticResult" class="mt-6 p-4 rounded-md result-box hidden"></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/time-calculator.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+PolarClockPro
+	designed by SalamancaTech 2025
+
+Made possible by the AI Assistance of:
+	Google Gemini
+	Project Jules
+	Notebook LM
+	Firebase Studio (Mobile App Only)
+
+Icons:
+	UXwing (y'all are awesome!) [https://uxwing.com/license/]
+
+Font: 
+	Oswald [https://fonts.google.com/specimen/Oswald]
+
+All music by:
+by Heinz Kiessling
+
+	"On Your Bike" - Work Cycle (Pomodoro Timer)
+	"Temptation Sensation" - Short Break Cycle (Pomodoro Timer)
+	"Captain's Table" - Long Break Cycle (Pomodoro Timer)

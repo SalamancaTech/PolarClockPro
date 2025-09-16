@@ -1,0 +1,57 @@
+Welcome to your guide for Polar Clock Pro! This document will walk you through all the features and settings available to help you make the most of this powerful time tool.
+
+## Display & Appearance
+
+Customize the look and feel of your clock to match your style and needs. All these settings can be found in the settings panel.
+
+### Color Themes
+You can choose from a variety of color presets to change the entire look of the clock.
+- **Standard Palettes:** Default, Neon, Pastel, and a Colorblind-Friendly option.
+- **Specialty Palettes:** Candy, Greyscale, Sunrise, and Sunset.
+- **Monochromatic Palettes:** Palettes based on single colors like Red, Orange, Yellow, Green, Blue, and Purple.
+
+### Time Format
+- **12-hour vs. 24-hour:** Switch between standard and military time formats.
+
+### Arc Visibility
+- **Toggle Arcs:** You have full control over which time arcs are displayed. You can show or hide Seconds, Minutes, Hours, Day, Month, Day of the Week, and Week of the Year.
+
+### Separators
+- **Show/Hide:** You can display or hide the separator lines between the arcs.
+- **Separator Style:** Choose between "Standard" clean lines or a more technical "Ruler" style with tick marks.
+- **Per-Arc Toggles:** You can also control the visibility of each separator individually.
+
+### Advanced Display Settings
+- **Inverse Mode:** Makes the arcs "empty" as time passes, rather than filling up.
+- **Reverse Mode:** Reverses the order of the colors in the current theme.
+- **Flow Mode:** Automatically cycles through different color themes at a set interval (e.g., every minute, hour, or day).
+- **Arc End Circles:** Toggles a circular handle at the end of each arc which contains the time label, making it easier to read.
+
+## Clock Tools
+
+Polar Clock Pro comes with a suite of powerful tools for time management.
+
+### Timer
+A fully functional countdown timer.
+- **Set Duration:** You can set a countdown for any duration, from seconds up to days.
+- **Interval Mode:** Toggle this on to make the timer automatically repeat every time it finishes.
+- **Visual Style:** A toggle is available to switch the timer's visual display style for a different look.
+- **Alarm Controls:** When the timer ends, you can Mute the alarm sound or Snooze for an additional 5 minutes.
+
+### Stopwatch
+A precision stopwatch with lap functionality.
+- **Controls:** Standard Start, Pause, and Reset buttons.
+- **Lap Timer:** Press the "Lap" button to record the current time without stopping the stopwatch.
+- **Lap Labels:** You can add a text label to each recorded lap to keep your measurements organized.
+- **Manual Time Entry:** A "Catch-Up" feature allows you to manually add minutes or seconds to the elapsed time.
+
+### Pomodoro Timer
+A built-in timer for the Pomodoro Technique.
+- **Customizable Durations:** Set your own preferred durations for Work sessions, Short Breaks, and Long Breaks.
+- **Continuous Mode:** When enabled, the timer will automatically start the next phase (e.g., from work to break) without requiring you to press start.
+- **Alarm Controls:** At the end of a session, you can Mute the alarm or Snooze it.
+
+## Sound Settings
+
+- **Alarm Sounds:** Choose from a variety of sounds for your timers and alarms.
+- **Volume Control:** Adjust the volume of the sound effects.
