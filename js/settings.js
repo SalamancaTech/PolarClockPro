@@ -111,6 +111,7 @@ const Settings = (function() {
     function loadSettings() {
         const savedSettings = localStorage.getItem('polarClockSettings');
         const defaultSettings = {
+            manualResize: false,
             flowMode: '0',
             showArcEndCircles: true,
             inverseMode: false,
@@ -155,6 +156,7 @@ const Settings = (function() {
 
     function applySettingsToUI() {
         // Standard settings
+        document.getElementById('manualResizeToggle').checked = settings.manualResize;
         document.getElementById('format12').classList.toggle('active', !settings.is24HourFormat);
         document.getElementById('format24').classList.toggle('active', settings.is24HourFormat);
         // Update color scheme buttons
@@ -220,6 +222,10 @@ const Settings = (function() {
                 document.dispatchEvent(new CustomEvent('settings-changed'));
             };
         }
+
+        document.getElementById('manualResizeToggle').addEventListener('change', createSettingUpdater(() => {
+            settings.manualResize = document.getElementById('manualResizeToggle').checked;
+        }));
 
         document.getElementById('format12').addEventListener('click', createSettingUpdater(() => { settings.is24HourFormat = false; }));
         document.getElementById('format24').addEventListener('click', createSettingUpdater(() => { settings.is24HourFormat = true; }));
