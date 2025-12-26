@@ -111,7 +111,7 @@ const Settings = (function() {
     function loadSettings() {
         const savedSettings = localStorage.getItem('polarClockSettings');
         const defaultSettings = {
-            clockScale: 95,
+            clockScale: 55,
             flowMode: '0',
             showArcEndCircles: true,
             inverseMode: false,
@@ -156,7 +156,7 @@ const Settings = (function() {
 
     function applySettingsToUI() {
         // Standard settings
-        const scaleVal = settings.clockScale !== undefined ? settings.clockScale : 95;
+        const scaleVal = settings.clockScale !== undefined ? settings.clockScale : 55;
         document.getElementById('clockSizeSlider').value = scaleVal;
         document.getElementById('clockSizeValue').textContent = `${scaleVal}%`;
 
