@@ -111,7 +111,7 @@ const Settings = (function() {
     function loadSettings() {
         const savedSettings = localStorage.getItem('polarClockSettings');
         const defaultSettings = {
-            manualResize: false,
+            clockScale: 95,
             flowMode: '0',
             showArcEndCircles: true,
             inverseMode: false,
@@ -156,7 +156,10 @@ const Settings = (function() {
 
     function applySettingsToUI() {
         // Standard settings
-        document.getElementById('manualResizeToggle').checked = settings.manualResize;
+        const scaleVal = settings.clockScale !== undefined ? settings.clockScale : 95;
+        document.getElementById('clockSizeSlider').value = scaleVal;
+        document.getElementById('clockSizeValue').textContent = `${scaleVal}%`;
+
         document.getElementById('format12').classList.toggle('active', !settings.is24HourFormat);
         document.getElementById('format24').classList.toggle('active', settings.is24HourFormat);
         // Update color scheme buttons
@@ -223,9 +226,16 @@ const Settings = (function() {
             };
         }
 
-        document.getElementById('manualResizeToggle').addEventListener('change', createSettingUpdater(() => {
-            settings.manualResize = document.getElementById('manualResizeToggle').checked;
-        }));
+        document.getElementById('clockSizeSlider').addEventListener('input', (e) => {
+             const val = parseInt(e.target.value, 10);
+             settings.clockScale = val;
+             document.getElementById('clockSizeValue').textContent = `${val}%`;
+             saveSettings();
+             // Dispatch generic change event
+             document.dispatchEvent(new CustomEvent('settings-changed'));
+             // Dispatch resize event specifically
+             document.dispatchEvent(new CustomEvent('settings-requires-resize'));
+        });
 
         document.getElementById('format12').addEventListener('click', createSettingUpdater(() => { settings.is24HourFormat = false; }));
         document.getElementById('format24').addEventListener('click', createSettingUpdater(() => { settings.is24HourFormat = true; }));
