@@ -379,6 +379,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- 5. UTILITY FUNCTIONS ---
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            const context = this;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(context, args), wait);
+        };
+    }
+
     function sortAlarms(alarmArray) {
         alarmArray.sort((a, b) => {
             switch (settings.sortOrder) {
@@ -899,9 +908,13 @@ document.addEventListener('DOMContentLoaded', () => {
             saveStateToStorage();
             applySettings();
         });
-        elements.settingsBar.searchBar.addEventListener('input', (e) => {
-            settings.searchQuery = e.target.value;
+        const debouncedSearch = debounce((query) => {
+            settings.searchQuery = query;
             renderAlarms();
+        }, 300);
+
+        elements.settingsBar.searchBar.addEventListener('input', (e) => {
+            debouncedSearch(e.target.value);
         });
         elements.settingsBar.sortAlarms.addEventListener('change', (e) => {
             settings.sortOrder = e.target.value;
