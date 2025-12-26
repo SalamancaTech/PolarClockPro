@@ -7,7 +7,15 @@ const Clock = (function() {
     let globalState = {};
     let dimensions = {};
     const baseStartAngle = -Math.PI / 2;
-    let lastNow = new Date();
+
+    // Testing & New Year's Mode Variables
+    let timeOffset = 0;
+    const getNow = () => new Date(Date.now() + timeOffset);
+    let isNewYearsMode = false;
+    let savedArcVisibility = null;
+    let newYearAudio = null;
+
+    let lastNow = getNow();
     let isFirstFrameDrawn = false;
     let animationFrameId = null;
     let resetAnimations = {};
@@ -21,6 +29,11 @@ const Clock = (function() {
     let previousColors = null;
 
     const hasCompletedCycle = (unit, now, lastNow) => {
+        // Prevent false positives when time traveling/warping
+        if (Math.abs(now.getTime() - lastNow.getTime()) > 5000) {
+            return false;
+        }
+
         switch (unit) {
             case 'seconds':
                 return lastNow.getSeconds() === 59 && now.getSeconds() === 0;
@@ -468,13 +481,111 @@ const Clock = (function() {
         }
     };
 
+    const startNewYearsMode = (offsetSeconds) => {
+        if (isNewYearsMode) return;
+        isNewYearsMode = true;
+
+        // 1. Force all arcs visible
+        savedArcVisibility = { ...settings.arcVisibility };
+        Object.keys(settings.arcVisibility).forEach(key => {
+            settings.arcVisibility[key] = true;
+        });
+
+        // 2. Trigger resize to accommodate all arcs
+        publicInterface.resize();
+
+        // 3. Play Audio
+        if (!newYearAudio) {
+            newYearAudio = new Audio('assets/Sounds/Auld_Lang_Syne-Maeve_Lander.mp3');
+            newYearAudio.volume = 1.0; // Independent volume, max
+        }
+
+        // Try to sync: start time was 1:45 (105s) before midnight.
+        // offsetSeconds is how many seconds *past* 23:58:15 we are.
+        if (offsetSeconds >= 0) {
+             newYearAudio.currentTime = offsetSeconds;
+        }
+
+        newYearAudio.play().catch(e => console.error("New Year Audio Autoplay prevented:", e));
+    };
+
+    const endNewYearsMode = () => {
+        if (!isNewYearsMode) return;
+        isNewYearsMode = false;
+
+        // 1. Restore visibility
+        if (savedArcVisibility) {
+            settings.arcVisibility = { ...savedArcVisibility };
+            savedArcVisibility = null;
+        }
+
+        // 2. Stop Audio
+        if (newYearAudio) {
+            newYearAudio.pause();
+            newYearAudio.currentTime = 0;
+            newYearAudio = null;
+        }
+
+        // 3. Resize back
+        publicInterface.resize();
+    };
+
+    const checkForSpecialEvents = (now) => {
+        // Target: Dec 31st 23:58:15
+        const month = now.getMonth(); // 0-11
+        const date = now.getDate();
+        const h = now.getHours();
+        const m = now.getMinutes();
+        const s = now.getSeconds();
+
+        // Check window: Dec 31 23:58:15 -> Jan 1 00:05:00
+        // Simplest check: is it Dec 31st and time >= 23:58:15?
+        const isDec31 = (month === 11 && date === 31);
+        const isJan1 = (month === 0 && date === 1);
+
+        if (isDec31) {
+            // Check start time
+            const totalSecondsToday = h * 3600 + m * 60 + s;
+            const targetSeconds = 23 * 3600 + 58 * 60 + 15; // 23:58:15
+
+            if (totalSecondsToday >= targetSeconds) {
+                const diff = totalSecondsToday - targetSeconds;
+                // If song hasn't finished (approx 4 mins?), keep mode on.
+                // Or use a hard limit like midnight + 5 mins.
+                startNewYearsMode(diff);
+            }
+        } else if (isJan1) {
+            // Allow mode to continue a bit into the new year
+            if (h === 0 && m < 5) {
+                // Determine offset? It's past the start, so we just ensure mode is on.
+                // We don't really need exact sync here if it's already playing,
+                // but if someone opens app now, we might want to skip into song?
+                // Song started 105 seconds before midnight.
+                // Seconds since midnight + 105.
+                const secondsSinceMidnight = m * 60 + s;
+                startNewYearsMode(105 + secondsSinceMidnight);
+            } else {
+                endNewYearsMode();
+            }
+        } else {
+            endNewYearsMode();
+        }
+
+        // Also ensure we stop if audio ends naturally
+        if (newYearAudio && newYearAudio.ended) {
+            endNewYearsMode();
+        }
+    };
+
     const drawClock = () => {
         if (!settings.currentColors || !globalState.timer) {
             return;
         }
 
-        const now = new Date();
+        const now = getNow();
         const nowMs = now.getTime();
+
+        checkForSpecialEvents(now);
 
         // --- Flow Mode Logic ---
         if (settings.flowMode && settings.flowMode !== '0') {
@@ -920,6 +1031,15 @@ const Clock = (function() {
 
             this.resume();
         },
+        simulateNewYear: function() {
+             // Set time to Dec 31st, 23:58:10 (5 seconds before trigger)
+             const now = new Date();
+             const target = new Date(now.getFullYear(), 11, 31, 23, 58, 10);
+             timeOffset = target.getTime() - now.getTime();
+             console.log("Time Travel Enabled: Simulating New Year's Eve (Dec 31 23:58:10)");
+             // Reset lastNow to avoid jump artifacts
+             lastNow = getNow();
+        },
         pause: function() {
             if (animationFrameId) {
                 cancelAnimationFrame(animationFrameId);
@@ -928,7 +1048,7 @@ const Clock = (function() {
         },
         resume: function() {
             if (!animationFrameId) {
-                lastNow = new Date();
+                lastNow = getNow();
                 animate();
             }
         },
