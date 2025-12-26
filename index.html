@@ -987,9 +987,12 @@
                 <!-- Section 1: Clock & Time -->
                 <div class="settings-group">
                     <h3 class="settings-group-title">Clock & Time</h3>
-                    <div class="setting-item">
-                        <label for="manualResizeToggle">Manual Resize</label>
-                        <label class="switch"><input type="checkbox" id="manualResizeToggle"><span class="slider"></span></label>
+                    <div class="setting-item-full">
+                         <div class="flex justify-between w-full mb-1">
+                            <label for="clockSizeSlider">Clock Size</label>
+                            <span id="clockSizeValue" class="text-sm text-gray-400">95%</span>
+                        </div>
+                        <input type="range" id="clockSizeSlider" min="10" max="100" value="95" class="w-full">
                     </div>
                     <div class="setting-item">
                         <label>Time Format</label>
