@@ -20,6 +20,10 @@ const Clock = (function() {
     let flowTransitionDuration = 1500; // ms
     let previousColors = null;
 
+    // Resizing State
+    let resizeObserver = null;
+    let isResizing = false;
+
     const hasCompletedCycle = (unit, now, lastNow) => {
         switch (unit) {
             case 'seconds':
@@ -824,17 +828,219 @@ const Clock = (function() {
         animationFrameId = requestAnimationFrame(animate);
     };
 
+    const applyResizeMode = () => {
+        const wrapper = document.querySelector('.clock-square-wrapper');
+        if (!wrapper) return;
+
+        if (settings.manualResize) {
+            // Enable CSS resize
+            wrapper.style.resize = 'both';
+            wrapper.style.overflow = 'hidden';
+            wrapper.style.maxWidth = 'none';
+            wrapper.style.maxHeight = 'none';
+            wrapper.style.width = wrapper.style.width || '500px'; // Default start size if none set
+            wrapper.style.height = wrapper.style.width;
+
+            if (!resizeObserver) {
+                resizeObserver = new ResizeObserver(entries => {
+                    for (let entry of entries) {
+                        handleResizeEntry(entry);
+                    }
+                });
+                resizeObserver.observe(wrapper);
+            }
+        } else {
+            // Disable CSS resize
+            wrapper.style.resize = '';
+            wrapper.style.overflow = '';
+            wrapper.style.width = '95vh';
+            wrapper.style.height = '95vh';
+            wrapper.style.maxWidth = '100%';
+            wrapper.style.maxHeight = '100%';
+
+            if (resizeObserver) {
+                resizeObserver.disconnect();
+                resizeObserver = null;
+            }
+            // Trigger a standard resize to reset layout
+            publicInterface.resize();
+        }
+    };
+
+    const handleResizeEntry = (entry) => {
+        if (isResizing) return;
+        isResizing = true;
+
+        requestAnimationFrame(() => {
+            const wrapper = entry.target;
+            const { width, height } = entry.contentRect;
+
+            // 1. Enforce Aspect Ratio (Square)
+            // Use the larger dimension to prevent accidental shrinking when dragging just one edge
+            let size = Math.max(width, height);
+
+            // 2. Enforce Constraints
+            // Min Size: Ensure inner circle is visible
+            const minSize = calculateMinSize();
+            // Max Size: Viewport dimensions
+            const maxSize = Math.min(window.innerWidth, window.innerHeight);
+
+            if (size < minSize) size = minSize;
+            if (size > maxSize) size = maxSize;
+
+            // Apply size
+            wrapper.style.width = `${size}px`;
+            wrapper.style.height = `${size}px`;
+
+            // Trigger internal redraw
+            publicInterface.resize();
+
+            // Save state if needed (handled in persistence step)
+            if (settings.manualResize) {
+                localStorage.setItem('polarClockSize', JSON.stringify({
+                    size: size,
+                    windowWidth: window.innerWidth,
+                    windowHeight: window.innerHeight
+                }));
+            }
+
+            isResizing = false;
+        });
+    };
+
+    const calculateMinSize = () => {
+        // Calculate minimal size based on visible arcs
+        // Base formula: (InnerBuffer + (NumArcs * (LineWidth + Gap))) * 2
+        // We can approximate or reuse the logic from resize()
+
+        // Let's reverse engineer the minimum radius.
+        // The innermost arc needs a radius > 0.
+        // In resize(), radius = currentRadius - (lineWidth / 2).
+        // currentRadius starts at (BaseRadius + TotalHeight) / 2.
+
+        // Simplified approach: Count visible arcs.
+        // Each arc needs approx 10% of base radius (very rough).
+        // A safer bet is a hard minimum pixels per arc.
+
+        const arcOrder = ['alarm', 'weekOfYear', 'seconds', 'minutes', 'hours', 'day', 'month', 'dayOfWeek', 'year'];
+        let visibleCount = 0;
+
+        const isArcVisible = (arcKey) => {
+             if (arcKey === 'alarm') return true;
+             if (globalState.mode === 'timer' && globalState.timer) {
+                 // Simplified visibility check for timer mode for min size calc
+                 const { totalSeconds } = globalState.timer;
+                 if (totalSeconds === 0) return false;
+                 // (Reuse visibility logic or just assume max for safety?)
+                 // Let's assume standard clock mode for the "safe" minimum,
+                 // as timer mode usually has fewer arcs.
+                 return false;
+             }
+             return settings.arcVisibility[arcKey];
+        };
+
+        arcOrder.forEach(key => {
+            if (isArcVisible(key)) visibleCount++;
+        });
+
+        // Heuristic: 25px per arc ring (width + gap) * 2 (both sides) + 50px inner hole
+        return (visibleCount * 50) + 100;
+    };
+
     const publicInterface = {
         init: function(initialSettings, initialState) {
             settings = initialSettings;
             globalState = initialState;
-            window.addEventListener('resize', () => this.resize());
+            window.addEventListener('resize', () => {
+                 if (!settings.manualResize) {
+                     this.resize();
+                 }
+            });
 
             document.addEventListener('flow-theme-changed', (e) => {
                 previousColors = e.detail.oldColors;
                 isFlowTransitioning = true;
                 flowTransitionStartTime = Date.now();
             });
+
+            // Listen for manual resize toggle
+            document.addEventListener('settings-changed', () => {
+                 if (settings.manualResize !== (document.querySelector('.clock-square-wrapper').style.resize === 'both')) {
+                     applyResizeMode();
+                 }
+            });
+
+            // Listen for arc visibility changes (which trigger settings-requires-resize)
+            // to re-evaluate min/max size requirements
+            document.addEventListener('settings-requires-resize', () => {
+                if (settings.manualResize) {
+                    const wrapper = document.querySelector('.clock-square-wrapper');
+                    if (wrapper) {
+                        const currentSize = parseFloat(wrapper.style.width) || 0;
+                        const minSize = calculateMinSize();
+                        const maxSize = Math.min(window.innerWidth, window.innerHeight);
+
+                        if (currentSize < minSize) {
+                             wrapper.style.width = `${minSize}px`;
+                             wrapper.style.height = `${minSize}px`;
+                             // Dispatch resize event or save new size?
+                             // Since this is programmatic, handleResizeEntry won't fire automatically unless observed.
+                             // But we just changed style, which WILL fire ResizeObserver if size changed.
+                        } else if (currentSize > maxSize) {
+                            wrapper.style.width = `${maxSize}px`;
+                            wrapper.style.height = `${maxSize}px`;
+                        }
+                    }
+                }
+            });
+
+            // Initial application
+            // Check for saved size on init
+            const savedSize = localStorage.getItem('polarClockSize');
+            if (savedSize && settings.manualResize) {
+                try {
+                    const { size, windowWidth, windowHeight } = JSON.parse(savedSize);
+                    const wrapper = document.querySelector('.clock-square-wrapper');
+
+                    if (wrapper) {
+                        // Logic:
+                        // If window size matches (approx), restore size.
+                        // If window is smaller, scale down.
+                        // If window is larger, reset (or keep, but requirements say "return to default on larger screens").
+
+                        const widthDiff = Math.abs(window.innerWidth - windowWidth);
+                        const heightDiff = Math.abs(window.innerHeight - windowHeight);
+                        const isSameWindowSize = widthDiff < 50 && heightDiff < 50; // Tolerance
+
+                        if (isSameWindowSize) {
+                             wrapper.style.width = `${size}px`;
+                             wrapper.style.height = `${size}px`;
+                        } else if (window.innerWidth < windowWidth || window.innerHeight < windowHeight) {
+                            // Screen got smaller: Scale down to fit
+                            // Just let the standard "max-width: 100%" (or constraints) handle it?
+                            // Manual resize mode removes max-width. We must calc manually.
+                            const maxSize = Math.min(window.innerWidth, window.innerHeight);
+                            const newSize = Math.min(size, maxSize);
+                            wrapper.style.width = `${newSize}px`;
+                            wrapper.style.height = `${newSize}px`;
+                        } else {
+                            // Screen got larger: "return to default"
+                            // If we don't set width/height here, applyResizeMode will set a default start size
+                            // OR we can just reset the storage?
+                            // For now, let's just not apply the old small size, let it re-init.
+                            // But applyResizeMode sets it to current width/height or 500px.
+                            // Let's set it to a safe large default (viewport)
+                             const defaultSize = Math.min(window.innerWidth, window.innerHeight) * 0.95;
+                             wrapper.style.width = `${defaultSize}px`;
+                             wrapper.style.height = `${defaultSize}px`;
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error loading saved clock size", e);
+                }
+            }
+
+            applyResizeMode();
 
             this.resume();
         },
