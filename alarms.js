@@ -199,8 +199,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function createAlarmCardHTML(alarm) {
         const timeData = formatTime(alarm.hour, alarm.minute, alarm.ampm);
         const daysStr = getDaysString(alarm.days);
-        const groupStr = alarm.group ? `<span class="bg-slate-700 text-xs px-2 py-1 rounded-full">${alarm.group}</span>` : '';
-        const descriptionStr = alarm.description ? `<p class="text-muted text-sm mt-2 italic truncate">${alarm.description}</p>` : '';
+        const safeGroup = escapeHTML(alarm.group);
+        const safeLabel = escapeHTML(alarm.label || 'Alarm');
+        const safeDescription = escapeHTML(alarm.description);
+
+        const groupStr = alarm.group ? `<span class="bg-slate-700 text-xs px-2 py-1 rounded-full">${safeGroup}</span>` : '';
+        const descriptionStr = alarm.description ? `<p class="text-muted text-sm mt-2 italic truncate">${safeDescription}</p>` : '';
         const temporaryStr = alarm.isTemporary ? `<p class="text-red-400 font-bold text-sm mt-1">Temporary</p>` : `<p class="text-muted text-sm mt-1">${daysStr}</p>`;
 
         return `
@@ -210,7 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="flex justify-between items-start">
                     <p class="text-4xl font-mono time-display">${timeData.time} <span class="text-2xl">${timeData.ampm}</span></p>
                     <div class="text-right space-y-1">
-                        <p class="text-sm font-semibold">${alarm.label || 'Alarm'}</p>
+                        <p class="text-sm font-semibold">${safeLabel}</p>
                         ${groupStr}
                     </div>
                 </div>
@@ -379,6 +383,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- 5. UTILITY FUNCTIONS ---
+    function escapeHTML(str) {
+        if (!str) return '';
+        return str
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
     function debounce(func, wait) {
         let timeout;
         return function(...args) {
@@ -704,7 +718,7 @@ document.addEventListener('DOMContentLoaded', () => {
             groupDiv.innerHTML = `
                 <div class="flex items-center gap-2">
                      <button data-action="rename-group" data-id="${group.id}" class="p-2 hover:bg-slate-600 rounded-full"><i class="ph-pencil-simple"></i></button>
-                     <span class="font-medium">${group.name}</span>
+                     <span class="font-medium">${escapeHTML(group.name)}</span>
                 </div>
                 <div class="flex items-center gap-4 text-sm text-muted">
                     <span>${timeStr}</span>
