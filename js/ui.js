@@ -84,7 +84,13 @@ const UI = (function() {
             fetch(`assets/content/${id}.txt`)
                 .then(response => response.text())
                 .then(text => {
-                    document.getElementById(`${id}-content`).innerHTML = `<div class="scrollable-content">${text}</div>`;
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'scrollable-content';
+                    // Replace newlines with <br> for basic formatting since we are moving away from innerHTML for security
+                    contentDiv.innerText = text;
+                    const container = document.getElementById(`${id}-content`);
+                    container.innerHTML = '';
+                    container.appendChild(contentDiv);
                 })
                 .catch(error => console.error(`Error fetching ${id}.txt:`, error));
         });
