@@ -479,7 +479,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function populateGroupDropdown(selectEl, selectedGroup = '') {
         selectEl.innerHTML = `
             <option value="">---</option>
-            ${groups.map(g => `<option value="${g.name}" ${g.name === selectedGroup ? 'selected' : ''}>${g.name}</option>`).join('')}
+            ${groups.map(g => {
+                const safeName = escapeHTML(g.name);
+                return `<option value="${safeName}" ${g.name === selectedGroup ? 'selected' : ''}>${safeName}</option>`;
+            }).join('')}
             <option value="new_group">-- New Group --</option>
         `;
     }
