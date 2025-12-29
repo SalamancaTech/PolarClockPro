@@ -17,6 +17,15 @@ const Tools = (function() {
     const stopwatchIntervalMinutes = document.getElementById('stopwatchIntervalMinutes');
     const stopwatchIntervalSeconds = document.getElementById('stopwatchIntervalSeconds');
 
+    function escapeHTML(str) {
+        if (!str) return '';
+        return str
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
 
     const statusDisplay = document.getElementById('pomodoroStatus');
     const pomodoroWorkDisplay = document.getElementById('pomodoroWorkDisplay');
@@ -280,7 +289,7 @@ const Tools = (function() {
             lapElement.innerHTML = `
                 <span class="lap-number">Lap ${index + 1}</span>
                 <span class="lap-time">${formatTime(lap.time)}</span>
-                <input type="text" class="lap-label-input" value="${lap.label}" data-index="${index}" placeholder="Add label...">
+                <input type="text" class="lap-label-input" value="${escapeHTML(lap.label)}" data-index="${index}" placeholder="Add label...">
             `;
             lapTimesContainer.prepend(lapElement);
         });
