@@ -1,0 +1,25 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "Polar Clock Pro is an interactive, visually-driven timekeeping application that displays the current date and time through a series of concentric, animated arcs. It also includes a suite of tools like a timer, alarm, and stopwatch.",
+  "main": "alarms.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SalamancaTech/PolarClockPro.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/SalamancaTech/PolarClockPro/issues"
+  },
+  "homepage": "https://github.com/SalamancaTech/PolarClockPro#readme",
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.18",
+    "tailwindcss": "^4.1.18"
+  }
+}

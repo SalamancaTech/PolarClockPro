@@ -186,7 +186,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const result = addTime(start, duration, startDay || null);
 
-            addTimeResultDiv.innerHTML = `Result: <span class="font-bold">${result}</span>`;
+            // Use textContent for safety, manually create the bold element
+            addTimeResultDiv.innerHTML = '';
+            addTimeResultDiv.textContent = 'Result: ';
+            const resultSpan = document.createElement('span');
+            resultSpan.className = 'font-bold';
+            resultSpan.textContent = result;
+            addTimeResultDiv.appendChild(resultSpan);
+
             addTimeResultDiv.classList.remove('hidden');
         });
     }
@@ -312,7 +319,14 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const result = calculateTime(time1, operator, operand);
 
-            arithmeticResultDiv.innerHTML = `Result: <span class="font-bold">${result}</span>`;
+            // Use textContent for safety, manually create the bold element
+            arithmeticResultDiv.innerHTML = '';
+            arithmeticResultDiv.textContent = 'Result: ';
+            const resultSpan = document.createElement('span');
+            resultSpan.className = 'font-bold';
+            resultSpan.textContent = result;
+            arithmeticResultDiv.appendChild(resultSpan);
+
             arithmeticResultDiv.classList.remove('hidden');
         });
     }
